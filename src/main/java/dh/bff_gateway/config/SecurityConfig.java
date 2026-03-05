@@ -1,5 +1,6 @@
 package dh.bff_gateway.config;
 
+import dh.bff_gateway.handler.DynamicLogoutSuccessHandler;
 import dh.bff_gateway.handler.DynamicRedirectSuccessHandler;
 import dh.bff_gateway.repository.OriginPreservingRepository;
 import lombok.RequiredArgsConstructor;
@@ -41,7 +42,7 @@ public class SecurityConfig {
                 .requestCache(requestCacheSpec -> requestCacheSpec
                         .requestCache(new WebSessionServerRequestCache()))
                 .logout(logout -> logout
-                        .logoutSuccessHandler(logoutSuccessHandler()))
+                        .logoutSuccessHandler(new DynamicLogoutSuccessHandler()))
                 .build();
     }
 
@@ -57,12 +58,6 @@ public class SecurityConfig {
         UrlBasedCorsConfigurationSource urlBasedCorsConfigurationSource = new UrlBasedCorsConfigurationSource();
         urlBasedCorsConfigurationSource.registerCorsConfiguration("/**", corsConfiguration);
         return urlBasedCorsConfigurationSource;
-    }
-
-    private ServerLogoutSuccessHandler logoutSuccessHandler() {
-        OidcClientInitiatedServerLogoutSuccessHandler handler = new OidcClientInitiatedServerLogoutSuccessHandler(clientRegistrationRepository);
-        handler.setPostLogoutRedirectUri("{baseUrl}");
-        return handler;
     }
 }
 

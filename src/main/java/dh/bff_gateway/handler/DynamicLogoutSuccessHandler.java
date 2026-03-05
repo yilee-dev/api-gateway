@@ -4,19 +4,21 @@ import org.springframework.http.HttpStatus;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.web.server.WebFilterExchange;
 import org.springframework.security.web.server.authentication.logout.RedirectServerLogoutSuccessHandler;
+import org.springframework.security.web.server.authentication.logout.ServerLogoutSuccessHandler;
 import org.springframework.web.server.ServerWebExchange;
 import org.springframework.web.server.WebSession;
 import reactor.core.publisher.Mono;
 
 import java.net.URI;
 
-public class DynamicLogoutSuccessHandler extends RedirectServerLogoutSuccessHandler {
+public class DynamicLogoutSuccessHandler implements ServerLogoutSuccessHandler {
     @Override
     public Mono<Void> onLogoutSuccess(WebFilterExchange exchange, Authentication authentication) {
         return exchange.getExchange().getSession()
                 .flatMap(WebSession::invalidate)
                 .then(Mono.fromRunnable(() -> {
                     exchange.getExchange().getResponse().setStatusCode(HttpStatus.OK);
+                    exchange.getExchange().getResponse().getHeaders().add("Cache-Control", "no-cache");
                 }));
 //        ServerWebExchange webExchange = exchange.getExchange();
 

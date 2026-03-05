@@ -45,7 +45,13 @@ public class SecurityConfig {
                 .cors(Customizer.withDefaults())
                 .csrf(csrf -> csrf
                         .csrfTokenRepository(cookieServerCsrfTokenRepository)
-                                .requireCsrfProtectionMatcher(CsrfWebFilter.DEFAULT_CSRF_MATCHER)
+                                .requireCsrfProtectionMatcher(exchange -> {
+                                    return ServerWebExchangeMatchers.pathMatchers(HttpMethod.POST, "/logout")
+                                            .matches(exchange)
+                                            .flatMap(matchResult -> matchResult.isMatch() ?
+                                                    ServerWebExchangeMatcher.MatchResult.notMatch() :
+                                                    CsrfWebFilter.DEFAULT_CSRF_MATCHER.matches(exchange));
+                                })
                         )
                 .addFilterAfter(new CsrfTokenResponseHeaderFilter(), SecurityWebFiltersOrder.CSRF)
                 .authorizeExchange(exchanges -> exchanges

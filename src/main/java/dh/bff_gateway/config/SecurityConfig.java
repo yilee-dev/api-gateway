@@ -13,6 +13,9 @@ import org.springframework.security.config.Customizer;
 import org.springframework.security.config.annotation.web.reactive.EnableWebFluxSecurity;
 import org.springframework.security.config.web.server.SecurityWebFiltersOrder;
 import org.springframework.security.config.web.server.ServerHttpSecurity;
+import org.springframework.security.oauth2.client.oidc.web.logout.OidcClientInitiatedLogoutSuccessHandler;
+import org.springframework.security.oauth2.client.oidc.web.server.logout.OidcClientInitiatedServerLogoutSuccessHandler;
+import org.springframework.security.oauth2.client.registration.ReactiveClientRegistrationRepository;
 import org.springframework.security.web.server.SecurityWebFilterChain;
 import org.springframework.security.web.server.csrf.CookieServerCsrfTokenRepository;
 import org.springframework.security.web.server.csrf.CsrfWebFilter;
@@ -31,6 +34,7 @@ import java.util.List;
 public class SecurityConfig {
 
     private final OriginPreservingRepository repository;
+    private final ReactiveClientRegistrationRepository clientRegistrationRepository;
 
     @Bean
     public SecurityWebFilterChain securityWebFilterChain(ServerHttpSecurity http) {
@@ -40,6 +44,8 @@ public class SecurityConfig {
                 cookie.httpOnly(true)
                         .secure(false)
                         .sameSite("Lax"));
+
+        OidcClientInitiatedServerLogoutSuccessHandler logoutSuccessHandler = new OidcClientInitiatedServerLogoutSuccessHandler(clientRegistrationRepository);
 
         return http
                 .cors(Customizer.withDefaults())
@@ -55,7 +61,7 @@ public class SecurityConfig {
                         )
                 .addFilterAfter(new CsrfTokenResponseHeaderFilter(), SecurityWebFiltersOrder.CSRF)
                 .authorizeExchange(exchanges -> exchanges
-                        .pathMatchers("/login/**", "/public/**", "/logout").permitAll()
+                        .pathMatchers("/login/**", "/public/**", "/logout", "/logout/**").permitAll()
                         .anyExchange().authenticated())
                 .oauth2Login(oauth2 -> oauth2
                         .authorizationRequestRepository(repository)
@@ -64,7 +70,7 @@ public class SecurityConfig {
                         .requestCache(new WebSessionServerRequestCache()))
                 .logout(logout -> logout
                         .requiresLogout(ServerWebExchangeMatchers.pathMatchers(HttpMethod.POST,"/logout"))
-                        .logoutSuccessHandler(new DynamicLogoutSuccessHandler()))
+                        .logoutSuccessHandler(logoutSuccessHandler))
                 .build();
     }
 

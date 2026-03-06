@@ -26,6 +26,7 @@ spring:
         provider:
           keycloak:
             issuer-uri: http://10.100.104.24:8080/realms/donghee
+            authorization-uri: http://10.100.104.24:8080/realms/donghee/protocol/openid-connect/auth
   cloud:
     gateway:
       server:
